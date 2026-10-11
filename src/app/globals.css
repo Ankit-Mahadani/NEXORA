@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #fbf9f5;
+    --foreground: #2d2a26;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #fbf9f5;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(254, 243, 235, 0.7) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(245, 238, 255, 0.6) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(255, 241, 230, 0.5) 0px, transparent 50%);
+    color: #2d2a26;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #e6ded3;
+    border-radius: 9999px;
+  }
+}
+
+/* 1. Fluid Swirling Orbit */
+@keyframes fluid-orbit {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* 2. Organic Floating Motion with soft breathing */
+@keyframes orb-levitate {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.25);
+  }
+  33% {
+    transform: translateY(-8px) rotate(1.5deg) scale(1.03);
+    box-shadow: 0 18px 45px rgba(168, 85, 247, 0.35);
+  }
+  66% {
+    transform: translateY(-3px) rotate(-1.5deg) scale(0.98);
+    box-shadow: 0 12px 35px rgba(192, 132, 252, 0.3);
+  }
+}
+
+/* 3. Pulsing Atmospheric Aura */
+@keyframes aura-pulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+/* 4. Shimmering Specular Light Curve */
+@keyframes specular-shimmer {
+  0%, 100% {
+    opacity: 0.75;
+    transform: rotate(-25deg) translate(0px, 0px);
+  }
+  50% {
+    opacity: 0.95;
+    transform: rotate(-22deg) translate(2px, 1px) scale(1.06);
+  }
+}
+
+/* 5. Liquid Wave Morph Effect */
+@keyframes liquid-morph {
+  0%, 100% {
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+  }
+  33% {
+    border-radius: 53% 47% 52% 48% / 48% 52% 47% 53%;
+  }
+  66% {
+    border-radius: 48% 52% 47% 53% / 52% 48% 53% 47%;
+  }
+}
+
+.animate-fluid-orbit {
+  animation: fluid-orbit 12s linear infinite;
+}
+
+.animate-orb-levitate {
+  animation: orb-levitate 6s ease-in-out infinite;
+}
+
+.animate-aura-pulse {
+  animation: aura-pulse 4.5s ease-in-out infinite;
+}
+
+.animate-specular-shimmer {
+  animation: specular-shimmer 4s ease-in-out infinite;
+}
+
+.animate-liquid-morph {
+  animation: liquid-morph 8s ease-in-out infinite;
+}
