@@ -1,5 +1,4 @@
 use chrono::Utc;
-use serde_json::Value;
 use crate::models::{EvaluationResult, DiagnosticResult, ToolExecutionResult};
 use crate::ollama::{OllamaClient, OllamaChatMessage};
 
@@ -27,7 +26,7 @@ impl EvaluationAgent {
             format!("Tool {}: success={}, stdout_len={}, stderr={}", o.tool_name, o.success, o.stdout.len(), o.stderr)
         }).collect::<Vec<_>>().join("\n");
 
-        let system_prompt = r#"You are the Evaluation Agent in NEXORA AI.
+        let system_prompt = r#"You are the Evaluation Agent in NEXORA.
 Evaluate whether the executions meet the verification criteria.
 Respond ONLY with a JSON object:
 {
@@ -61,7 +60,7 @@ Respond ONLY with a JSON object:
         };
 
         if let Ok(res) = self.ollama.chat_complete(model, messages, true).await {
-            if let Ok(val) = serde_json::from_str::<Value>(&res) {
+            if let Some(val) = crate::agents::extract_json(&res) {
                 let score = val["score"].as_f64().unwrap_or(0.5) as f32;
                 let passed = val["passed"].as_bool().unwrap_or(!any_failed);
                 let evidence = val["evidence"].as_array()
@@ -114,7 +113,7 @@ impl DiagnosticAgent {
             .collect::<Vec<_>>()
             .join("\n");
 
-        let system_prompt = r#"You are the Diagnostic Agent in NEXORA AI.
+        let system_prompt = r#"You are the Diagnostic Agent in NEXORA.
 Analyze failures and propose a minimal targeted repair.
 Respond ONLY with JSON:
 {
@@ -144,7 +143,7 @@ Respond ONLY with JSON:
         };
 
         if let Ok(res) = self.ollama.chat_complete(model, messages, true).await {
-            if let Ok(val) = serde_json::from_str::<Value>(&res) {
+            if let Some(val) = crate::agents::extract_json(&res) {
                 return DiagnosticResult {
                     id: uuid::Uuid::new_v4().to_string(),
                     task_id: task_id.to_string(),

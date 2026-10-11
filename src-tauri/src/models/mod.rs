@@ -26,6 +26,39 @@ pub struct Task {
     pub max_iterations: u32,
     pub workspace_path: String,
     pub selected_model: String,
+    #[serde(default)]
+    pub is_ephemeral: Option<bool>,
+    #[serde(default)]
+    pub rating: Option<String>,
+    #[serde(default)]
+    pub feedback_notes: Option<String>,
+    #[serde(default)]
+    pub result: Option<String>,
+    #[serde(default)]
+    pub session_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatSession {
+    pub id: String,
+    pub title: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    #[serde(default)]
+    pub is_ephemeral: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub id: String,
+    pub session_id: String,
+    pub role: String,
+    pub content: String,
+    #[serde(default)]
+    pub task_id: Option<String>,
+    pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub metadata: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,12 +92,35 @@ pub struct Plan {
 pub enum AgentRole {
     Supervisor,
     Planner,
+    VariationWorker,
     Research,
     Coding,
     ToolExecution,
     Evaluation,
     Diagnostic,
     Memory,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SupervisorHint {
+    pub id: String,
+    pub task_id: String,
+    pub hint: String,
+    pub strategy: String,
+    pub timestamp: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VariationCandidate {
+    pub id: String,
+    pub task_id: String,
+    pub parent_candidate_id: Option<String>,
+    pub iteration: u32,
+    pub hypothesis: String,
+    pub subtasks: Vec<Subtask>,
+    pub status: String, // "created", "executing", "evaluated", "accepted", "stagnated"
+    pub score: Option<f32>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -157,6 +213,15 @@ pub enum NexoraEvent {
     PlanGenerated(Plan),
     AgentStarted(AgentRun),
     AgentProgress { run_id: String, message: String, percentage: Option<f32> },
+    SupervisorIntervention(SupervisorHint),
+    AvoStepProgress {
+        task_id: String,
+        step_number: u32,
+        step_name: String,
+        iteration: u32,
+        description: String,
+    },
+    VariationCandidateCreated(VariationCandidate),
     ToolCallRequested(ToolCallRequest),
     ApprovalRequired(ToolCallRequest),
     ToolCallStarted { call_id: String, tool_name: String },
@@ -164,8 +229,11 @@ pub enum NexoraEvent {
     CandidateEvaluated(EvaluationResult),
     DiagnosticGenerated(DiagnosticResult),
     MemoryUpdated(MemoryItem),
+    LineageCommitted { task_id: String, nodes_count: usize, rels_count: usize },
     TaskCompleted { task_id: String, final_summary: String },
     TaskFailed { task_id: String, reason: String },
     TaskCancelled { task_id: String },
+    TaskRated { task_id: String, rating: String, notes: Option<String> },
     StreamToken { task_id: String, token: String },
+    ChatMessageAdded(ChatMessage),
 }

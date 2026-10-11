@@ -9,6 +9,29 @@ export interface Task {
   max_iterations: number;
   workspace_path: string;
   selected_model: string;
+  rating?: string;
+  feedback_notes?: string;
+  is_ephemeral?: boolean;
+  result?: string;
+  session_id?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  is_ephemeral?: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  task_id?: string;
+  created_at: string;
+  metadata?: string;
 }
 
 export interface Subtask {
@@ -75,6 +98,34 @@ export interface EvaluationResult {
   failure_reasons: string[];
   recommended_action: string;
   evaluated_at: string;
+}
+
+export interface SupervisorHint {
+  id: string;
+  task_id: string;
+  hint: string;
+  strategy: string;
+  timestamp: string;
+}
+
+export interface VariationCandidate {
+  id: string;
+  task_id: string;
+  parent_candidate_id?: string;
+  iteration: number;
+  hypothesis: string;
+  subtasks: Subtask[];
+  status: 'created' | 'executing' | 'evaluated' | 'accepted' | 'stagnated';
+  score?: number;
+  created_at: string;
+}
+
+export interface AvoStepProgress {
+  task_id: string;
+  step_number: number;
+  step_name: string;
+  iteration: number;
+  description: string;
 }
 
 export interface DiagnosticResult {

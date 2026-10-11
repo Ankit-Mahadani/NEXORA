@@ -44,11 +44,16 @@ impl Tool for RunCommandTool {
             },
         };
 
-        // On Windows run via powershell or cmd
-        let mut child = Command::new("powershell")
+        // On Windows run via powershell with aliases for common cross-platform shell commands (e.g. open -> Start-Process)
+        let full_script = format!(
+            "Set-Alias -Name open -Value Start-Process -ErrorAction SilentlyContinue; {}",
+            cmd_str
+        );
+
+        let child = Command::new("powershell")
             .arg("-NoProfile")
             .arg("-Command")
-            .arg(cmd_str)
+            .arg(full_script)
             .current_dir(cwd_path)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())

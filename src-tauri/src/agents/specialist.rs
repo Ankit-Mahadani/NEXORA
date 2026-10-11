@@ -1,4 +1,3 @@
-use serde_json::Value;
 use crate::models::{ToolCallRequest, ToolExecutionResult};
 use crate::ollama::{OllamaClient, OllamaChatMessage};
 use crate::tools::ToolRegistry;
@@ -32,24 +31,41 @@ impl SpecialistAgent {
         }).collect::<Vec<_>>().join("\n---\n");
 
         let system_prompt = format!(
-            r#"You are the {} Agent in NEXORA AI.
+            r#"You are the {role} Agent in NEXORA, an autonomous local assistant for Ankit.
+Host Environment: Windows OS. Terminal commands run in PowerShell.
 Available tools:
-{}
+{tools}
 
-Based on the objective, subtask, and prior observations, decide if you need to call a tool or if the subtask is finished.
-If you need a tool, respond ONLY with a JSON object:
+Action Guidelines:
+1. Files on Desktop & Downloads:
+   - Create/write text files on Desktop: call 'write_file' with path "Desktop/<filename>" and content.
+   - Open files in Notepad: call 'desktop_app' with action "open", target "notepad", args "Desktop/<filename>".
+   - Close Notepad or apps: call 'desktop_app' with action "close", target "notepad".
+   - Inspect downloaded question files: call 'read_file' with path "Downloads/<filename>" or "Desktop/<filename>".
+   - Answer/solve questions: analyze the questions, then call 'write_file' with path "Desktop/answers.txt" with detailed answers.
+2. System Power & Shutdown:
+   - Schedule shutdown: call 'system_control' with action "shutdown", delay_seconds (e.g. 600 for 10 minutes).
+   - Cancel shutdown: call 'system_control' with action "cancel_shutdown".
+3. Screen Captures:
+   - Take full screenshot: call 'take_screenshot' with destination "Desktop/screenshot.png".
+4. Web, Mail, Classroom, Pinterest & Apps:
+   - Open URLs (Gmail, Classroom, Pinterest): call 'desktop_app' with action "open", target "chrome", args "https://..." or call 'run_command' with: Start-Process chrome "https://...".
+   - Open Spotify & play a song: call 'desktop_app' with action "open", target "spotify", args "<song name>" (e.g. "chamak chalo"). This automatically opens Spotify, searches for the song, highlights the top result, and plays the first song.
+
+Decision Format:
+If a tool is needed, respond ONLY with a JSON object:
 {{
   "call_tool": true,
-  "tool_name": "list_dir|read_file|write_file|patch_file|run_command|system_info",
+  "tool_name": "write_file|read_file|list_dir|desktop_app|system_control|take_screenshot|run_command|system_info",
   "arguments": {{ ... }}
 }}
-If the task is already complete or no tool is needed, respond with:
+If the task is complete or providing direct answer:
 {{
   "call_tool": false,
-  "summary": "What was achieved or discovered"
+  "summary": "Detailed summary of achievements and findings"
 }}
 Return ONLY valid JSON. No conversational text outside JSON."#,
-            self.role_name, tools_json
+            role = self.role_name, tools = tools_json
         );
 
         let user_content = format!(
@@ -67,7 +83,7 @@ Return ONLY valid JSON. No conversational text outside JSON."#,
             Err(_) => return Ok(None),
         };
 
-        if let Ok(val) = serde_json::from_str::<Value>(&response) {
+        if let Some(val) = crate::agents::extract_json(&response) {
             if val["call_tool"].as_bool().unwrap_or(false) {
                 if let Some(tool_name) = val["tool_name"].as_str() {
                     let arguments = val["arguments"].clone();

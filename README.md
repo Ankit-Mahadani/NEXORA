@@ -1,6 +1,6 @@
-# NEXORA AI — Autonomous Local-First Multi-Agent Intelligence System
+# NEXORA v1.0 — Autonomous Local-First Multi-Agent Intelligence System
 
-NEXORA AI is a private, production-grade, local-first multi-agent desktop AI operating assistant built with **Tauri v2**, **Rust**, **Next.js (App Router)**, **Tokio**, **Ollama**, and **SQLite/Neo4j**.
+NEXORA is a private, production-grade, local-first multi-agent desktop AI operating assistant built with **Tauri v2**, **Rust**, **Next.js (App Router)**, **Tokio**, **Ollama**, and **SQLite/Neo4j**.
 
 ---
 

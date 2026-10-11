@@ -123,3 +123,279 @@
 .animate-liquid-morph {
   animation: liquid-morph 8s ease-in-out infinite;
 }
+
+/* ========================================================
+   THEME STYLES (Light/White is default; Dark mode active on .dark or [data-theme="dark"])
+   ======================================================== */
+@variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+html.dark, html[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #f4f4f5;
+  color-scheme: dark;
+}
+
+html.dark body,
+html[data-theme="dark"] body {
+  background-color: #000000 !important;
+  background-image: none !important;
+  color: #f4f4f5 !important;
+}
+
+/* Scrollbars in dark mode */
+html.dark ::-webkit-scrollbar-thumb,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #27272a !important;
+}
+html.dark ::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46 !important;
+}
+
+/* Overriding light cream backgrounds with pure black (#000000) */
+html.dark [class*="bg-[#fbf9f5]"],
+html.dark [class*="bg-[#fbf8f2]"],
+html.dark [class*="bg-[#fdfbf7]"],
+html.dark [class*="bg-[#fdfcfa]"],
+html.dark [class*="bg-[#fbf9f4]"],
+html.dark [class*="bg-[#faf7f2]"],
+html[data-theme="dark"] [class*="bg-[#fbf9f5]"],
+html[data-theme="dark"] [class*="bg-[#fbf8f2]"],
+html[data-theme="dark"] [class*="bg-[#fdfbf7]"],
+html[data-theme="dark"] [class*="bg-[#fdfcfa]"],
+html[data-theme="dark"] [class*="bg-[#fbf9f4]"],
+html[data-theme="dark"] [class*="bg-[#faf7f2]"] {
+  background-color: #000000 !important;
+}
+
+html.dark [class*="bg-[#f8f5ee]"],
+html[data-theme="dark"] [class*="bg-[#f8f5ee]"] {
+  background-color: #080808 !important;
+}
+
+html.dark [class*="bg-[#f6f1e8]"],
+html.dark [class*="bg-[#f7f2ea]"],
+html.dark [class*="bg-[#f7f3eb]"],
+html.dark [class*="bg-[#f4eee4]"],
+html.dark [class*="bg-[#f4efe6]"],
+html.dark [class*="bg-[#f3ece0]"],
+html.dark [class*="bg-[#fcfaf7]"],
+html[data-theme="dark"] [class*="bg-[#f6f1e8]"],
+html[data-theme="dark"] [class*="bg-[#f7f2ea]"],
+html[data-theme="dark"] [class*="bg-[#f7f3eb]"],
+html[data-theme="dark"] [class*="bg-[#f4eee4]"],
+html[data-theme="dark"] [class*="bg-[#f4efe6]"],
+html[data-theme="dark"] [class*="bg-[#f3ece0]"],
+html[data-theme="dark"] [class*="bg-[#fcfaf7]"] {
+  background-color: #121212 !important;
+}
+
+/* White cards and primary panels -> pure deep black card (#0a0a0a) */
+html.dark .bg-white,
+html[data-theme="dark"] .bg-white {
+  background-color: #0a0a0a !important;
+}
+
+html.dark .bg-white\/40,
+html.dark .bg-white\/60,
+html.dark .bg-white\/70,
+html.dark .bg-white\/80,
+html.dark .bg-white\/90,
+html[data-theme="dark"] .bg-white\/40,
+html[data-theme="dark"] .bg-white\/60,
+html[data-theme="dark"] .bg-white\/70,
+html[data-theme="dark"] .bg-white\/80,
+html[data-theme="dark"] .bg-white\/90 {
+  background-color: rgba(10, 10, 10, 0.94) !important;
+}
+
+/* Chat bubble for user in dark mode */
+html.dark [class*="bg-[#f3ede3]"],
+html[data-theme="dark"] [class*="bg-[#f3ede3]"] {
+  background-color: #1a1a1a !important;
+  color: #f4f4f5 !important;
+}
+
+/* Borders in dark mode -> clean, crisp deep borders (#1f1f1f) */
+html.dark [class*="border-[#e5"],
+html.dark [class*="border-[#e6"],
+html.dark [class*="border-[#e8"],
+html.dark [class*="border-[#eb"],
+html.dark [class*="border-[#ec"],
+html.dark [class*="border-[#ed"],
+html.dark [class*="border-[#ef"],
+html.dark [class*="border-[#f0"],
+html.dark [class*="border-[#f3"],
+html.dark [class*="border-[#f4"],
+html[data-theme="dark"] [class*="border-[#e5"],
+html[data-theme="dark"] [class*="border-[#e6"],
+html[data-theme="dark"] [class*="border-[#e8"],
+html[data-theme="dark"] [class*="border-[#eb"],
+html[data-theme="dark"] [class*="border-[#ec"],
+html[data-theme="dark"] [class*="border-[#ed"],
+html[data-theme="dark"] [class*="border-[#ef"],
+html[data-theme="dark"] [class*="border-[#f0"],
+html[data-theme="dark"] [class*="border-[#f3"],
+html[data-theme="dark"] [class*="border-[#f4"] {
+  border-color: #1f1f1f !important;
+}
+
+/* Text primary in dark mode */
+html.dark [class*="text-[#1c1917]"],
+html.dark [class*="text-[#2d2a26]"],
+html.dark [class*="text-[#38332d]"],
+html[data-theme="dark"] [class*="text-[#1c1917]"],
+html[data-theme="dark"] [class*="text-[#2d2a26]"],
+html[data-theme="dark"] [class*="text-[#38332d]"] {
+  color: #f4f4f5 !important;
+}
+
+/* Text secondary/muted in dark mode */
+html.dark [class*="text-[#4b4337]"],
+html.dark [class*="text-[#5e564a]"],
+html.dark [class*="text-[#635b4f]"],
+html.dark [class*="text-[#645c4f]"],
+html.dark [class*="text-[#665e52]"],
+html.dark [class*="text-[#696154]"],
+html.dark [class*="text-[#6c6458]"],
+html.dark [class*="text-[#6e6558]"],
+html.dark [class*="text-[#6e6659]"],
+html.dark [class*="text-[#71685b]"],
+html.dark [class*="text-[#726a5e]"],
+html.dark [class*="text-[#736a5c]"],
+html.dark [class*="text-[#786e60]"],
+html.dark [class*="text-[#786f62]"],
+html.dark [class*="text-[#786f63]"],
+html.dark [class*="text-[#797063]"],
+html.dark [class*="text-[#7a7164]"],
+html.dark [class*="text-[#7b7264]"],
+html.dark [class*="text-[#7e7568]"],
+html[data-theme="dark"] [class*="text-[#4b4337]"],
+html[data-theme="dark"] [class*="text-[#5e564a]"],
+html[data-theme="dark"] [class*="text-[#635b4f]"],
+html[data-theme="dark"] [class*="text-[#645c4f]"],
+html[data-theme="dark"] [class*="text-[#665e52]"],
+html[data-theme="dark"] [class*="text-[#696154]"],
+html[data-theme="dark"] [class*="text-[#6c6458]"],
+html[data-theme="dark"] [class*="text-[#6e6558]"],
+html[data-theme="dark"] [class*="text-[#6e6659]"],
+html[data-theme="dark"] [class*="text-[#71685b]"],
+html[data-theme="dark"] [class*="text-[#726a5e]"],
+html[data-theme="dark"] [class*="text-[#736a5c]"],
+html[data-theme="dark"] [class*="text-[#786e60]"],
+html[data-theme="dark"] [class*="text-[#786f62]"],
+html[data-theme="dark"] [class*="text-[#786f63]"],
+html[data-theme="dark"] [class*="text-[#797063]"],
+html[data-theme="dark"] [class*="text-[#7a7164]"],
+html[data-theme="dark"] [class*="text-[#7b7264]"],
+html[data-theme="dark"] [class*="text-[#7e7568]"] {
+  color: #a1a1aa !important;
+}
+
+/* Text subtle/hint in dark mode */
+html.dark [class*="text-[#857b6d]"],
+html.dark [class*="text-[#8a8174]"],
+html.dark [class*="text-[#8c8275]"],
+html.dark [class*="text-[#8e8576]"],
+html.dark [class*="text-[#8e8577]"],
+html.dark [class*="text-[#918778]"],
+html.dark [class*="text-[#938a7c]"],
+html.dark [class*="text-[#9c9284]"],
+html.dark [class*="text-[#9f9486]"],
+html.dark [class*="text-[#a19789]"],
+html.dark [class*="text-[#b5aa9b]"],
+html[data-theme="dark"] [class*="text-[#857b6d]"],
+html[data-theme="dark"] [class*="text-[#8a8174]"],
+html[data-theme="dark"] [class*="text-[#8c8275]"],
+html[data-theme="dark"] [class*="text-[#8e8576]"],
+html[data-theme="dark"] [class*="text-[#8e8577]"],
+html[data-theme="dark"] [class*="text-[#918778]"],
+html[data-theme="dark"] [class*="text-[#938a7c]"],
+html[data-theme="dark"] [class*="text-[#9c9284]"],
+html[data-theme="dark"] [class*="text-[#9f9486]"],
+html[data-theme="dark"] [class*="text-[#a19789]"],
+html[data-theme="dark"] [class*="text-[#b5aa9b]"] {
+  color: #71717a !important;
+}
+
+/* Active navigation item text */
+html.dark .text-violet-900,
+html[data-theme="dark"] .text-violet-900 {
+  color: #e9d5ff !important;
+}
+
+/* Form controls in dark mode */
+html.dark input,
+html.dark textarea,
+html.dark select,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: #090909 !important;
+  color: #f4f4f5 !important;
+  border-color: #27272a !important;
+}
+
+html.dark select option,
+html[data-theme="dark"] select option {
+  background-color: #090909 !important;
+  color: #f4f4f5 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #71717a !important;
+}
+
+/* Hover effects in dark mode */
+html.dark [class*="hover:bg-[#f6f2ea]"]:hover,
+html.dark [class*="hover:bg-[#fbf9f5]"]:hover,
+html.dark [class*="hover:bg-white"]:hover,
+html[data-theme="dark"] [class*="hover:bg-[#f6f2ea]"]:hover,
+html[data-theme="dark"] [class*="hover:bg-[#fbf9f5]"]:hover,
+html[data-theme="dark"] [class*="hover:bg-white"]:hover {
+  background-color: #181818 !important;
+}
+
+html.dark [class*="hover:text-[#1c1917]"]:hover,
+html.dark [class*="hover:text-[#2d2a26]"]:hover,
+html[data-theme="dark"] [class*="hover:text-[#1c1917]"]:hover,
+html[data-theme="dark"] [class*="hover:text-[#2d2a26]"]:hover {
+  color: #ffffff !important;
+}
+
+/* Status pill backgrounds in dark mode for soft harmony */
+html.dark .bg-emerald-50,
+html[data-theme="dark"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+html.dark .bg-rose-50,
+html[data-theme="dark"] .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+html.dark .bg-amber-50,
+html[data-theme="dark"] .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+html.dark .bg-violet-50,
+html[data-theme="dark"] .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.18) !important;
+}
+html.dark .bg-violet-100,
+html[data-theme="dark"] .bg-violet-100 {
+  background-color: rgba(139, 92, 246, 0.25) !important;
+}
+html.dark .border-violet-200,
+html[data-theme="dark"] .border-violet-200 {
+  border-color: rgba(139, 92, 246, 0.35) !important;
+}
+html.dark .text-violet-700,
+html[data-theme="dark"] .text-violet-700 {
+  color: #c4b5fd !important;
+}
+html.dark .text-violet-800,
+html[data-theme="dark"] .text-violet-800 {
+  color: #ddd6fe !important;
+}

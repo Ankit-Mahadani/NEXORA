@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "nexora",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.nexora.ai",
   "build": {
     "frontendDist": "../out",
@@ -12,7 +12,8 @@
   "app": {
     "windows": [
       {
-        "title": "NEXORA AI",
+        "label": "main",
+        "title": "NEXORA",
         "width": 1280,
         "height": 820,
         "minWidth": 960,

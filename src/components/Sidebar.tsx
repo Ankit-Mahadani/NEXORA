@@ -11,11 +11,13 @@ import {
   Settings,
   ShieldCheck,
   ChevronRight,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAppStore, ActiveView } from "@/store/useAppStore";
 
 export function Sidebar() {
-  const { currentView, setCurrentView } = useAppStore();
+  const { currentView, setCurrentView, theme, setTheme } = useAppStore();
 
   const navItems: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
     { id: "chat", label: "Workspace & Assistant", icon: <Sparkles className="w-4 h-4 text-violet-500" /> },
@@ -34,18 +36,20 @@ export function Sidebar() {
         <div className="p-5 border-b border-[#ece4d8]/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-violet-400/50 to-pink-300/50 rounded-2xl blur-sm opacity-70 group-hover:opacity-100 transition duration-300"></div>
-              <div className="relative w-9 h-9 rounded-2xl bg-white border border-[#f0e8dc] flex items-center justify-center font-bold text-violet-700 shadow-sm">
-                <span className="bg-gradient-to-tr from-violet-600 via-pink-500 to-amber-500 bg-clip-text text-transparent font-black text-base">
-                  N
-                </span>
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/40 to-amber-300/40 rounded-2xl blur-sm opacity-70 group-hover:opacity-100 transition duration-300"></div>
+              <div className="relative w-9 h-9 rounded-2xl bg-white dark:bg-[#121212] border border-[#f0e8dc] dark:border-[#262626] flex items-center justify-center overflow-hidden shadow-sm p-1.5">
+                <img
+                  src="/logo.png"
+                  alt="NEXORA Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
             </div>
             <div>
               <div className="font-semibold text-sm tracking-tight text-[#2d2a26] flex items-center gap-1.5">
-                NEXORA AI
+                NEXORA
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
-                  v0.1
+                  v1.0
                 </span>
               </div>
               <div className="text-[11px] text-[#8c8275] flex items-center gap-1.5 mt-0.5">
@@ -93,16 +97,30 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer Info */}
-      <div className="p-5 border-t border-[#ece4d8]/80 bg-[#fbf9f4]/60 space-y-2">
+      {/* Footer Info & Quick Theme Switcher */}
+      <div className="p-4 border-t border-[#ece4d8]/80 bg-[#fbf9f4]/60 space-y-2">
         <div className="flex items-center justify-between text-[11px]">
           <span className="flex items-center gap-1.5 text-[#726a5e]">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             Sandbox Active
           </span>
-          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full font-mono border border-emerald-200">
-            Protected
-          </span>
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-white hover:bg-[#f6f2ea] text-[#6c6458] border border-[#ece4d8] transition-all cursor-pointer shadow-2xs"
+            title={theme === "light" ? "Switch to Dark (Obsidian) theme" : "Switch to Light (White) theme"}
+          >
+            {theme === "light" ? (
+              <>
+                <Sun className="w-3 h-3 text-amber-500 fill-amber-500/20" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3 h-3 text-violet-400 fill-violet-400/20" />
+                <span>Dark</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </aside>

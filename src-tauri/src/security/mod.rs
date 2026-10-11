@@ -22,8 +22,21 @@ pub struct SecurityManager {
 
 impl SecurityManager {
     pub fn new(initial_workspace: PathBuf) -> Self {
+        let mut roots = vec![initial_workspace];
+        if let Some(desktop) = dirs::desktop_dir() {
+            roots.push(desktop);
+        }
+        if let Some(downloads) = dirs::download_dir() {
+            roots.push(downloads);
+        }
+        if let Some(docs) = dirs::document_dir() {
+            roots.push(docs);
+        }
+        if let Some(home) = dirs::home_dir() {
+            roots.push(home);
+        }
         Self {
-            workspace_roots: vec![initial_workspace],
+            workspace_roots: roots,
         }
     }
 
@@ -33,15 +46,47 @@ impl SecurityManager {
         }
     }
 
-    /// Validates path traversal and ensures path is inside authorized workspace
+    /// Expands standard path prefixes (~, Desktop, Downloads, Documents)
+    pub fn resolve_path_prefix(&self, target_path: &Path) -> PathBuf {
+        let path_str = target_path.to_string_lossy();
+        if path_str.starts_with("~/") || path_str.starts_with("~\\") {
+            if let Some(home) = dirs::home_dir() {
+                return home.join(&path_str[2..]);
+            }
+        }
+        let lower = path_str.to_lowercase();
+        if lower.starts_with("desktop/") || lower.starts_with("desktop\\") {
+            if let Some(desktop) = dirs::desktop_dir() {
+                return desktop.join(&path_str[8..]);
+            }
+        }
+        if lower.starts_with("downloads/") || lower.starts_with("downloads\\") {
+            if let Some(downloads) = dirs::download_dir() {
+                return downloads.join(&path_str[10..]);
+            }
+        }
+        if lower.starts_with("documents/") || lower.starts_with("documents\\") {
+            if let Some(docs) = dirs::document_dir() {
+                return docs.join(&path_str[10..]);
+            }
+        }
+        target_path.to_path_buf()
+    }
+
+    /// Validates path traversal and ensures path is inside authorized workspace or user folders
     pub fn validate_path(&self, target_path: &Path) -> Result<PathBuf, String> {
-        let canonical_target = if target_path.exists() {
-            target_path.canonicalize().map_err(|e| format!("Failed to canonicalize path: {}", e))?
+        let resolved = self.resolve_path_prefix(target_path);
+
+        let canonical_target = if resolved.exists() {
+            resolved.canonicalize().map_err(|e| format!("Failed to canonicalize path: {}", e))?
         } else {
             // If file does not exist yet, check its canonical parent directory
-            let parent = target_path.parent().unwrap_or(Path::new("."));
+            let parent = resolved.parent().unwrap_or(Path::new("."));
+            if !parent.exists() {
+                let _ = std::fs::create_dir_all(parent);
+            }
             let can_parent = parent.canonicalize().map_err(|e| format!("Parent directory does not exist or invalid: {}", e))?;
-            can_parent.join(target_path.file_name().unwrap_or_default())
+            can_parent.join(resolved.file_name().unwrap_or_default())
         };
 
         for root in &self.workspace_roots {

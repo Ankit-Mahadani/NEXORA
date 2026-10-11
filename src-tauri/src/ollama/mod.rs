@@ -92,6 +92,42 @@ impl OllamaClient {
         Ok(body.models)
     }
 
+    pub async fn verify_model(&self, model: &str) -> bool {
+        let url = format!("{}/api/chat", self.base_url);
+        let req = OllamaChatRequest {
+            model: model.to_string(),
+            messages: vec![OllamaChatMessage {
+                role: "user".into(),
+                content: "ping".into(),
+            }],
+            stream: false,
+            format: None,
+            options: Some(serde_json::json!({ "num_predict": 1 })),
+        };
+        match self.client.post(&url).timeout(Duration::from_secs(4)).json(&req).send().await {
+            Ok(resp) => resp.status().is_success(),
+            Err(_) => false,
+        }
+    }
+
+    pub async fn resolve_working_model(&self, preferred: &str) -> String {
+        if let Ok(models) = self.list_models().await {
+            if !models.is_empty() {
+                if let Some(matched) = models.iter().find(|m| m.name == preferred || m.name.starts_with(preferred)) {
+                    return matched.name.clone();
+                }
+
+                if let Some(local) = models.iter().find(|m| !m.name.contains("cloud")) {
+                    return local.name.clone();
+                }
+
+                return models[0].name.clone();
+            }
+        }
+
+        preferred.to_string()
+    }
+
     pub async fn chat_complete(
         &self,
         model: &str,
