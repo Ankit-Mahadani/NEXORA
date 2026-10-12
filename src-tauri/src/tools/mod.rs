@@ -9,6 +9,8 @@ pub mod terminal;
 pub mod system;
 pub mod automation;
 pub mod assignment;
+pub mod social;
+pub mod productivity;
 
 #[async_trait]
 pub trait Tool: Send + Sync {
@@ -38,6 +40,8 @@ impl ToolRegistry {
         registry.register(Box::new(automation::DesktopAppTool));
         registry.register(Box::new(automation::SystemControlTool));
         registry.register(Box::new(assignment::AssignmentPipelineTool));
+        registry.register(Box::new(social::SocialMessagingTool));
+        registry.register(Box::new(productivity::ProductivityTool));
         registry
     }
 

@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { safeInvoke } from "@/lib/ipc";
 import { useAppStore } from "@/store/useAppStore";
+import { SocialConnectorsCard } from "./SocialConnectorsCard";
+import { ProductivityIntegrationsCard } from "./ProductivityIntegrationsCard";
 
 export function SettingsView() {
   const {
@@ -283,6 +285,12 @@ export function SettingsView() {
           </div>
         </div>
       </div>
+
+      {/* Social Media & Messaging Connectors (WhatsApp, Telegram, Discord, Slack) */}
+      <SocialConnectorsCard />
+
+      {/* Productivity & Workspace Integrations (Docs, Notes, Tasks, Reminders, Email, Calendar) */}
+      <ProductivityIntegrationsCard />
 
       {/* Appearance & Workspace Theme */}
       <div className="p-6 bg-white border border-[#ece4d8] rounded-3xl space-y-5 shadow-xs max-w-4xl">

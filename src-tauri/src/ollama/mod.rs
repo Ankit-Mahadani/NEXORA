@@ -220,4 +220,52 @@ impl OllamaClient {
 
         Ok(full_text)
     }
+
+    pub async fn generate_embeddings(&self, model: &str, text: &str) -> Result<Vec<f32>, String> {
+        let embed_url = format!("{}/api/embed", self.base_url);
+        let req_embed = serde_json::json!({
+            "model": model,
+            "input": text,
+        });
+
+        if let Ok(resp) = self.client.post(&embed_url).timeout(Duration::from_secs(10)).json(&req_embed).send().await {
+            if resp.status().is_success() {
+                if let Ok(val) = resp.json::<serde_json::Value>().await {
+                    if let Some(arr) = val.get("embeddings").and_then(|e| e.as_array()) {
+                        if let Some(first) = arr.first().and_then(|f| f.as_array()) {
+                            let floats: Vec<f32> = first.iter().filter_map(|x| x.as_f64().map(|f| f as f32)).collect();
+                            if !floats.is_empty() {
+                                return Ok(floats);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback to /api/embeddings
+        let embeddings_url = format!("{}/api/embeddings", self.base_url);
+        let req_legacy = serde_json::json!({
+            "model": model,
+            "prompt": text,
+        });
+
+        let resp = self.client.post(&embeddings_url).timeout(Duration::from_secs(10)).json(&req_legacy).send().await
+            .map_err(|e| format!("Embedding request failed: {}", e))?;
+
+        if !resp.status().is_success() {
+            return Err(format!("Ollama embeddings returned HTTP {}", resp.status()));
+        }
+
+        let val: serde_json::Value = resp.json().await.map_err(|e| format!("Failed to parse embedding json: {}", e))?;
+        if let Some(arr) = val.get("embedding").and_then(|e| e.as_array()) {
+            let floats: Vec<f32> = arr.iter().filter_map(|x| x.as_f64().map(|f| f as f32)).collect();
+            if !floats.is_empty() {
+                return Ok(floats);
+            }
+        }
+
+        Err("No embedding vector returned by Ollama".to_string())
+    }
 }
+

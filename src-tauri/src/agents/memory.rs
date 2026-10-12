@@ -24,6 +24,7 @@ impl MemoryAgent {
             source: "supervisor_loop".to_string(),
             verified,
             created_at: Utc::now(),
+            similarity_score: None,
         };
 
         db.save_memory(&item)?;

@@ -106,13 +106,93 @@ pub fn run() {
             ));
 
             let state = AppState {
-                orchestrator,
-                db: local_db,
+                orchestrator: orchestrator.clone(),
+                db: local_db.clone(),
                 neo4j,
                 ollama,
                 telemetry,
                 security,
             };
+
+            // Spawn Background Scheduled Automation Daemon
+            let daemon_app = app.handle().clone();
+            let daemon_db = local_db.clone();
+            let daemon_orch = orchestrator.clone();
+
+            tokio::spawn(async move {
+                let mut interval = tokio::time::interval(std::time::Duration::from_secs(15));
+                loop {
+                    interval.tick().await;
+
+                    if let Ok(jobs) = daemon_db.list_scheduled_jobs() {
+                        let now = chrono::Utc::now();
+                        for job in jobs {
+                            if !job.enabled {
+                                continue;
+                            }
+
+                            let is_due = match job.next_run_at {
+                                Some(next) => next <= now,
+                                None => true,
+                            };
+
+                            if is_due {
+                                let job_id = job.id.clone();
+                                let job_name = job.name.clone();
+                                let prompt = job.prompt.clone();
+                                let cron_expr = job.cron_expression.clone();
+                                let app_handle = daemon_app.clone();
+                                let orch = daemon_orch.clone();
+                                let db = daemon_db.clone();
+
+                                // Update next_run immediately to avoid duplicate firing
+                                let next_run = crate::storage::sqlite::compute_next_run(&cron_expr, now);
+                                let _ = db.update_scheduled_job_run(&job_id, "running", now, Some(next_run));
+
+                                tokio::spawn(async move {
+                                    let model = db.get_setting("selected_model")
+                                        .unwrap_or(None)
+                                        .unwrap_or_else(|| "qwen2.5-coder:7b".to_string());
+                                    let cwd = std::env::current_dir().unwrap_or_default().to_string_lossy().to_string();
+
+                                    let task = crate::models::Task {
+                                        id: uuid::Uuid::new_v4().to_string(),
+                                        title: format!("[Scheduled] {}", job_name),
+                                        objective: prompt,
+                                        status: crate::models::TaskStatus::Pending,
+                                        created_at: chrono::Utc::now(),
+                                        updated_at: chrono::Utc::now(),
+                                        current_iteration: 0,
+                                        max_iterations: 5,
+                                        workspace_path: cwd,
+                                        selected_model: model,
+                                        is_ephemeral: Some(false),
+                                        rating: None,
+                                        feedback_notes: None,
+                                        result: None,
+                                        session_id: None,
+                                    };
+
+                                    let _ = db.save_task(&task);
+                                    let res = orch.run_task(&app_handle, task).await;
+                                    let status = if res.is_ok() { "success" } else { "failed" };
+                                    let finished_at = chrono::Utc::now();
+                                    let future_run = crate::storage::sqlite::compute_next_run(&cron_expr, finished_at);
+                                    let _ = db.update_scheduled_job_run(&job_id, status, finished_at, Some(future_run));
+
+                                    use tauri::Emitter;
+                                    let _ = app_handle.emit("nexora://event", crate::models::NexoraEvent::JobExecuted {
+                                        job_id,
+                                        job_name,
+                                        status: status.to_string(),
+                                        message: res.unwrap_or_else(|e| e),
+                                    });
+                                });
+                            }
+                        }
+                    }
+                }
+            });
 
             app.manage(state);
             Ok(())
@@ -135,6 +215,29 @@ pub fn run() {
             commands::delete_chat_session,
             commands::get_session_messages,
             commands::save_chat_message,
+            commands::list_scheduled_jobs,
+            commands::create_scheduled_job,
+            commands::toggle_scheduled_job,
+            commands::delete_scheduled_job,
+            commands::trigger_scheduled_job,
+            commands::list_verified_lessons,
+            commands::save_verified_lesson,
+            commands::delete_verified_lesson,
+            commands::trigger_safe_rollback,
+            commands::get_self_learning_metrics,
+            commands::scan_predictive_issues,
+            commands::dismiss_predictive_issue,
+            commands::apply_predictive_fix,
+            commands::convert_nl_to_workflow,
+            commands::list_executable_workflows,
+            commands::save_executable_workflow,
+            commands::delete_executable_workflow,
+            commands::run_executable_workflow,
+            commands::start_swe_task,
+            commands::list_swe_runs,
+            commands::run_swe_sandbox_tests,
+            commands::create_swe_pull_request,
+            commands::query_mind_graph,
         ])
         .run(tauri::generate_context!())
         .expect("error while running NEXORA desktop application");

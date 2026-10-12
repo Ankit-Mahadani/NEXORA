@@ -8,6 +8,11 @@ import { MemoryExplorerView } from "@/components/MemoryExplorerView";
 import { ModelManagerView } from "@/components/ModelManagerView";
 import { SystemMonitorView } from "@/components/SystemMonitorView";
 import { SettingsView } from "@/components/SettingsView";
+import { AgentTeamView } from "@/components/AgentTeamView";
+import { PredictiveRadarView } from "@/components/PredictiveRadarView";
+import { NlWorkflowBuilderView } from "@/components/NlWorkflowBuilderView";
+import { AutonomousSweView } from "@/components/AutonomousSweView";
+import { MindGraphIntelligenceView } from "@/components/MindGraphIntelligenceView";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useAppStore } from "@/store/useAppStore";
 import { safeListen, safeInvoke } from "@/lib/ipc";
@@ -267,7 +272,11 @@ export default function Home() {
       <main className="flex-1 flex overflow-hidden">
         {currentView === "chat" && <ChatWorkspace />}
         {currentView === "tasks" && <TaskHistoryView />}
-        {currentView === "agents" && <ChatWorkspace />}
+        {currentView === "agents" && <AgentTeamView />}
+        {currentView === "predictive" && <PredictiveRadarView />}
+        {currentView === "workflows" && <NlWorkflowBuilderView />}
+        {currentView === "swe" && <AutonomousSweView />}
+        {currentView === "graph" && <MindGraphIntelligenceView />}
         {currentView === "memory" && <MemoryExplorerView />}
         {currentView === "models" && <ModelManagerView />}
         {currentView === "monitor" && <SystemMonitorView />}

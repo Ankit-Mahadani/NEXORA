@@ -96,6 +96,8 @@ pub enum AgentRole {
     Research,
     Coding,
     ToolExecution,
+    Tester,
+    Reviewer,
     Evaluation,
     Diagnostic,
     Memory,
@@ -188,6 +190,21 @@ pub struct MemoryItem {
     pub source: String,
     pub verified: bool,
     pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub similarity_score: Option<f32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScheduledJob {
+    pub id: String,
+    pub name: String,
+    pub cron_expression: String,
+    pub prompt: String,
+    pub enabled: bool,
+    pub last_run_at: Option<DateTime<Utc>>,
+    pub next_run_at: Option<DateTime<Utc>>,
+    pub last_status: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -236,4 +253,145 @@ pub enum NexoraEvent {
     TaskRated { task_id: String, rating: String, notes: Option<String> },
     StreamToken { task_id: String, token: String },
     ChatMessageAdded(ChatMessage),
+    JobExecuted { job_id: String, job_name: String, status: String, message: String },
+    LessonLearned(VerifiedLesson),
+    RollbackExecuted { task_id: String, checkpoint_id: String, target_path: String, reason: String },
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerifiedLesson {
+    pub id: String,
+    pub error_signature: String,
+    pub root_cause: String,
+    pub failed_approach: String,
+    pub verified_solution: String,
+    pub domain: String,
+    pub prevented_count: u32,
+    pub confidence_score: f32,
+    pub created_at: DateTime<Utc>,
+    pub last_applied_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RollbackCheckpoint {
+    pub id: String,
+    pub task_id: String,
+    pub target_path: String,
+    pub content_backup: String,
+    pub created_at: DateTime<Utc>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelfLearningMetrics {
+    pub total_mistakes_detected: u32,
+    pub total_verified_corrections: u32,
+    pub total_rollbacks_executed: u32,
+    pub recurring_errors_prevented: u32,
+    pub correction_accuracy_rate: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PredictiveIssue {
+    pub id: String,
+    pub title: String,
+    pub category: String, // "dependency", "deadline", "bottleneck", "failure_risk"
+    pub severity: String, // "critical", "warning", "info"
+    pub affected_component: String,
+    pub predicted_impact: String,
+    pub suggested_action: String,
+    pub auto_fixable: bool,
+    pub detected_at: DateTime<Utc>,
+    pub status: String, // "active", "resolved", "dismissed"
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PredictiveScanSummary {
+    pub total_issues: usize,
+    pub critical_count: usize,
+    pub warning_count: usize,
+    pub health_score: f32, // 0.0 - 100.0
+    pub bottleneck_risk: String,
+    pub issues: Vec<PredictiveIssue>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStep {
+    pub id: String,
+    pub title: String,
+    pub integration: String, // "git", "terminal", "email", "notes", "calendar", "social"
+    pub action: String,
+    pub parameters: serde_json::Value,
+    pub on_failure: String, // "retry", "fallback", "abort"
+    pub require_approval: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExecutableWorkflow {
+    pub id: String,
+    pub name: String,
+    pub natural_instruction: String,
+    pub trigger_type: String, // "schedule", "file_change", "webhook", "social_event", "manual"
+    pub trigger_config: String,
+    pub conditions: Vec<String>,
+    pub steps: Vec<WorkflowStep>,
+    pub require_approval: bool,
+    pub enabled: bool,
+    pub last_run_at: Option<DateTime<Utc>>,
+    pub status: String, // "idle", "running", "success", "failed"
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SweTestResult {
+    pub passed: bool,
+    pub total_tests: usize,
+    pub passed_tests: usize,
+    pub failed_tests: usize,
+    pub output: String,
+    pub duration_ms: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutonomousSweRun {
+    pub id: String,
+    pub repository_path: String,
+    pub task_type: String, // "feature", "bugfix", "refactor", "audit"
+    pub objective: String,
+    pub branch_name: String,
+    pub status: String, // "indexing", "implementing", "testing", "reviewing", "pr_ready", "completed", "failed"
+    pub files_changed: Vec<String>,
+    pub test_results: Option<SweTestResult>,
+    pub pr_title: String,
+    pub pr_summary: String,
+    pub diff_preview: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KnowledgeEntity {
+    pub id: String,
+    pub name: String,
+    pub entity_type: String, // "memory", "conversation", "file", "project", "decision"
+    pub summary: String,
+    pub metadata: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KnowledgeRelation {
+    pub source_id: String,
+    pub target_id: String,
+    pub relation_type: String, // "influenced", "created_by", "depends_on", "resolved_in", "modifies", "referenced_by"
+    pub confidence: f32,
+    pub explanation: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphDiscoveryResult {
+    pub nodes: Vec<KnowledgeEntity>,
+    pub edges: Vec<KnowledgeRelation>,
+    pub insight: String,
+    pub path_hops: usize,
+}
+

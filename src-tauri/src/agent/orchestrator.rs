@@ -230,7 +230,71 @@ impl Orchestrator {
                             }
                         };
                         let _ = app_handle.emit("nexora://event", NexoraEvent::ToolCallCompleted(result.clone()));
-                        iteration_observations.push(result);
+                        iteration_observations.push(result.clone());
+
+                        // Automatic Retries when a Test Fails (Self-Improving Agent Teams)
+                        let is_test_failure = (subtask.assigned_agent == "tester" || subtask.title.to_lowercase().contains("test")) && !result.success;
+                        if is_test_failure {
+                            let _ = app_handle.emit("nexora://event", NexoraEvent::AgentProgress {
+                                run_id: task_id.clone(),
+                                message: format!("Tester Agent detected test failure: {}. Initiating automatic diagnostic retry loop...", result.stderr),
+                                percentage: Some(0.48),
+                            });
+
+                            let max_test_retries = 3;
+                            let mut retry_count = 0;
+                            let mut test_passed = false;
+                            let mut current_failure = result;
+
+                            while retry_count < max_test_retries && !test_passed {
+                                retry_count += 1;
+                                let _ = app_handle.emit("nexora://event", NexoraEvent::AgentProgress {
+                                    run_id: task_id.clone(),
+                                    message: format!("Automatic Retry ({}/{}): Diagnosing failure & dispatching code repair to Coder Agent...", retry_count, max_test_retries),
+                                    percentage: Some(0.48 + (retry_count as f32 * 0.05)),
+                                });
+
+                                let diag_agent = DiagnosticAgent::new(self.ollama.clone());
+                                let mock_eval = EvaluationResult {
+                                    id: uuid::Uuid::new_v4().to_string(),
+                                    task_id: task_id.clone(),
+                                    candidate_id: candidate_id.clone(),
+                                    score: 0.25,
+                                    passed: false,
+                                    evidence: vec![format!("Test execution failed: {}", current_failure.stderr)],
+                                    failure_reasons: vec![current_failure.stderr.clone()],
+                                    recommended_action: "retry_with_diagnosis".to_string(),
+                                    evaluated_at: Utc::now(),
+                                };
+
+                                let diag_res = diag_agent.diagnose(&model, &task_id, &task.objective, &mock_eval, &[current_failure.clone()]).await;
+                                let _ = app_handle.emit("nexora://event", NexoraEvent::DiagnosticGenerated(diag_res.clone()));
+
+                                let coder = SpecialistAgent::new("coding", self.ollama.clone());
+                                let repair_prompt = format!("Fix code to solve test error: Root cause: {}. Suggested repair: {}", diag_res.root_cause, diag_res.suggested_repair);
+                                if let Ok(Some(repair_action)) = coder.decide_action(&model, &task.objective, &repair_prompt, &self.tools, &iteration_observations).await {
+                                    if let Some(tool) = self.tools.get(&repair_action.tool_name) {
+                                        let rep_res = tool.execute(repair_action.arguments.clone(), &self.security).await;
+                                        iteration_observations.push(rep_res);
+                                    }
+                                }
+
+                                if let Some(retest_tool) = self.tools.get(&action.tool_name) {
+                                    let retest_res = retest_tool.execute(action.arguments.clone(), &self.security).await;
+                                    iteration_observations.push(retest_res.clone());
+                                    if retest_res.success {
+                                        test_passed = true;
+                                        let _ = app_handle.emit("nexora://event", NexoraEvent::AgentProgress {
+                                            run_id: task_id.clone(),
+                                            message: format!("Tester Agent: Test PASSED on automatic retry {}/{}!", retry_count, max_test_retries),
+                                            percentage: Some(0.68),
+                                        });
+                                    } else {
+                                        current_failure = retest_res;
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     // Fallback heuristic grounding for common desktop targets
@@ -582,6 +646,19 @@ impl Orchestrator {
             ) {
                 let _ = app_handle.emit("nexora://event", NexoraEvent::MemoryUpdated(mem));
             }
+
+            let score_val = winning_candidate.as_ref().and_then(|c| c.score).unwrap_or(0.9);
+            let workflow_summary = format!(
+                "Self-Improving Workflow: Objective '{}' completed with score {:.2}. Specialist team pipeline [Planner -> Researcher -> Coder -> Tester -> Reviewer] reinforced as reliable.",
+                task.objective, score_val
+            );
+            let _ = MemoryAgent::save_experience(
+                &self.db,
+                &task_id,
+                "workflow_pattern",
+                &workflow_summary,
+                score_val >= 0.75,
+            );
         }
 
         // Flowchart: "Agent Response"
@@ -786,7 +863,9 @@ impl Orchestrator {
             "open chrome", "open browser", "open mail", "open gmail", "open classroom", "open pinterest",
             "open notepad", "close notepad", "close file",
             "download picture", "download the picture", "download file",
-            "run command", "terminal", "powershell"
+            "run command", "terminal", "powershell",
+            "whatsapp", "telegram", "discord", "slack", "send message", "text message", "read message", "check message", "reply to", "reply on",
+            "document", "create document", "write document", "note", "take a note", "save note", "task", "add task", "to-do", "todo", "reminder", "remind me", "set reminder", "email", "send email", "check email", "check inbox", "calendar", "schedule meeting", "schedule event", "set a meeting"
         ];
 
         for pattern in &action_patterns {

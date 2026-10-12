@@ -13,6 +13,10 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  ShieldAlert,
+  GitPullRequest,
+  Workflow,
+  Share2,
 } from "lucide-react";
 import { useAppStore, ActiveView } from "@/store/useAppStore";
 
@@ -22,8 +26,12 @@ export function Sidebar() {
   const navItems: { id: ActiveView; label: string; icon: React.ReactNode }[] = [
     { id: "chat", label: "Workspace & Assistant", icon: <Sparkles className="w-4 h-4 text-violet-500" /> },
     { id: "tasks", label: "Task History", icon: <ListTodo className="w-4 h-4 text-rose-400" /> },
-    { id: "agents", label: "Agent Runs", icon: <Bot className="w-4 h-4 text-indigo-500" /> },
-    { id: "memory", label: "Memory Explorer", icon: <Brain className="w-4 h-4 text-purple-400" /> },
+    { id: "agents", label: "Agent Teams", icon: <Bot className="w-4 h-4 text-indigo-500" /> },
+    { id: "predictive", label: "Predictive Radar", icon: <ShieldAlert className="w-4 h-4 text-rose-500" /> },
+    { id: "workflows", label: "Workflow Builder", icon: <Workflow className="w-4 h-4 text-amber-500" /> },
+    { id: "swe", label: "Autonomous SWE", icon: <GitPullRequest className="w-4 h-4 text-sky-500" /> },
+    { id: "graph", label: "Mind Graph", icon: <Share2 className="w-4 h-4 text-teal-500" /> },
+    { id: "memory", label: "Memory & Lineage", icon: <Brain className="w-4 h-4 text-purple-400" /> },
     { id: "models", label: "Ollama Models", icon: <Cpu className="w-4 h-4 text-amber-500" /> },
     { id: "monitor", label: "System Monitor", icon: <Activity className="w-4 h-4 text-emerald-500" /> },
     { id: "settings", label: "Security & Rules", icon: <Settings className="w-4 h-4 text-stone-400" /> },

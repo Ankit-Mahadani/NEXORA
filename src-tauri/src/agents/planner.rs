@@ -46,10 +46,12 @@ Common scenarios:
 - Read files, extract, write answers to Desktop -> assign 'research', then 'coding'
 
 Each subtask must assign one of the following specialist agents:
-- 'variation_worker': For implementing and executing candidate operations
-- 'coding': For writing answers, editing files, formatting solutions
-- 'research': For inspecting downloaded files, extracting questions
+- 'research': For gathering codebase context, reading files, discovering APIs
+- 'coding': For writing code, modifying files, crafting implementations
+- 'tester': For executing tests, running sanity commands, asserting expectations
+- 'reviewer': For auditing code quality, security boundaries, edge case coverage
 - 'tool_execution': For running desktop apps, power commands, screenshots, web launch
+- 'variation_worker': For implementing candidate operations
 - 'evaluation': For verifying results against criteria
 
 Return ONLY a valid JSON array of objects with the following schema:
@@ -57,7 +59,7 @@ Return ONLY a valid JSON array of objects with the following schema:
   {{
     "title": "Short title",
     "description": "What to do",
-    "assigned_agent": "variation_worker|coding|research|tool_execution|evaluation",
+    "assigned_agent": "research|coding|tester|reviewer|tool_execution|variation_worker|evaluation",
     "expected_output": "Concrete output expected",
     "verification_criteria": "How to verify success"
   }}
