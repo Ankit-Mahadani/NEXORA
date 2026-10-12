@@ -2,7 +2,9 @@ import sys
 import os
 import argparse
 import json
-import textwrap
+import random
+import math
+from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 
 def get_font(font_path, size):
@@ -36,15 +38,57 @@ def wrap_text_to_width(text, font, max_width, draw):
         lines.append(' '.join(current_line))
     return lines
 
+def draw_hand_text_line(draw, text, start_x, start_y, font, base_rgb, rng):
+    words = text.split(' ')
+    curr_x = start_x
+    for i, word in enumerate(words):
+        if not word:
+            continue
+        # Baseline micro-jitter: replicates organic human hand tremor (-1.2 to +1.2 px)
+        jitter_y = start_y + rng.uniform(-1.2, 1.2)
+        
+        # Micro-variation in ink density: simulates varying ballpoint pen pressure
+        r = max(0, min(255, int(base_rgb[0] + rng.randint(-8, 8))))
+        g = max(0, min(255, int(base_rgb[1] + rng.randint(-8, 8))))
+        b = max(0, min(255, int(base_rgb[2] + rng.randint(-8, 8))))
+        ink_color = (r, g, b)
+
+        draw.text((curr_x, jitter_y), word, fill=ink_color, font=font)
+        bbox = draw.textbbox((curr_x, jitter_y), word, font=font)
+        word_w = bbox[2] - bbox[0]
+        
+        # Organic spacing variance between words
+        space_w = font.size * 0.30 + rng.uniform(-0.6, 1.2)
+        curr_x += word_w + space_w
+
+def draw_hand_underline(draw, x1, y, x2, color, rng, width=2):
+    # Organic wavy underline beneath headings and Ans tags
+    steps = max(3, int((x2 - x1) / 18))
+    step_w = (x2 - x1) / steps
+    points = []
+    for i in range(steps + 1):
+        px = x1 + i * step_w
+        py = y + rng.uniform(-1.0, 1.0)
+        points.append((px, py))
+    for i in range(len(points) - 1):
+        draw.line([points[i], points[i+1]], fill=color, width=width)
+
+def draw_binder_holes(draw, height, hole_x=65, radius=16):
+    # 3 Realistic punched binder holes along the notebook margin
+    ys = [int(height * 0.18), int(height * 0.50), int(height * 0.82)]
+    for y in ys:
+        draw.ellipse([(hole_x - radius - 2, y - radius - 2), (hole_x + radius + 2, y + radius + 2)], fill='#ded7cb')
+        draw.ellipse([(hole_x - radius, y - radius), (hole_x + radius, y + radius)], fill='#f5efe6', outline='#c8beaf', width=2)
+
 def generate_handwritten_pages(assignment_title, subject_name, student_name, reg_no, qa_items, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     width, height = 1240, 1754 # A4 at 150 DPI
     line_height = 46
-    top_margin = 230
-    left_margin = 175
-    right_margin = width - 70
+    top_margin = 240
+    left_margin = 185
+    right_margin = width - 65
     content_width = right_margin - (left_margin + 20)
-    bottom_margin = height - 100
+    bottom_margin = height - 90
 
     # Fonts
     font_bold = get_font('C:/Windows/Fonts/segoeprb.ttf', 24) or get_font('C:/Windows/Fonts/arialbd.ttf', 22)
@@ -52,88 +96,113 @@ def generate_handwritten_pages(assignment_title, subject_name, student_name, reg
     font_body = get_font('C:/Windows/Fonts/Inkfree.ttf', 28) or get_font('C:/Windows/Fonts/segoepr.ttf', 24)
     font_question = get_font('C:/Windows/Fonts/segoeprb.ttf', 25) or get_font('C:/Windows/Fonts/arialbd.ttf', 22)
 
+    # Inks
+    ink_black_rgb = (20, 27, 40)       # Black Gel Pen (Questions & Headers)
+    ink_burgundy_rgb = (136, 19, 55)   # Dark Crimson / Burgundy (Ans tags & underlines)
+    ink_blue_rgb = (22, 52, 102)       # Royal Blue Ballpoint Pen (Answers)
+
     # Temporary image for measuring
     meas_img = Image.new('RGB', (width, height))
     meas_draw = ImageDraw.Draw(meas_img)
 
     # Flatten all content into discrete printable lines
-    printable_lines = [] # list of (type, text)
+    printable_lines = [] # list of (type, tag, text)
     for idx, item in enumerate(qa_items, start=1):
         q_raw = item.get('q', f'Question {idx}')
         a_raw = item.get('a', '')
         
         # Wrap question
-        q_lines = wrap_text_to_width(f"Q{idx}. {q_raw}", font_question, content_width, meas_draw)
-        for ql in q_lines:
-            printable_lines.append(('q', ql))
+        q_tag = f"Q{idx}."
+        q_lines = wrap_text_to_width(q_raw, font_question, content_width - 10, meas_draw)
+        if q_lines:
+            printable_lines.append(('q_head', q_tag, q_lines[0]))
+            for ql in q_lines[1:]:
+                printable_lines.append(('q_cont', '', ql))
+        else:
+            printable_lines.append(('q_head', q_tag, ''))
         
-        printable_lines.append(('ans_head', 'Ans:'))
+        printable_lines.append(('ans_head', 'Ans:', ''))
         
         # Split answers by paragraph then wrap
         paragraphs = a_raw.split('\n')
         for p in paragraphs:
             p = p.strip()
             if not p:
-                printable_lines.append(('blank', ''))
+                printable_lines.append(('blank', '', ''))
                 continue
             wrapped_p = wrap_text_to_width(p, font_body, content_width, meas_draw)
             for wl in wrapped_p:
-                printable_lines.append(('a', wl))
+                printable_lines.append(('a', '', wl))
         
-        printable_lines.append(('blank', ''))
-        printable_lines.append(('blank', ''))
+        printable_lines.append(('blank', '', ''))
+        printable_lines.append(('blank', '', ''))
 
     # Calculate pages needed
     max_lines_per_page = (bottom_margin - top_margin) // line_height - 1
     pages_data = []
     curr_page = []
     
-    for l_type, l_text in printable_lines:
+    for item in printable_lines:
         if len(curr_page) >= max_lines_per_page:
             pages_data.append(curr_page)
             curr_page = []
-        curr_page.append((l_type, l_text))
+        curr_page.append(item)
     if curr_page:
         pages_data.append(curr_page)
 
     if not pages_data:
-        pages_data = [[('ans_head', 'No content specified.')]]
+        pages_data = [[('ans_head', 'Ans:', 'No content specified.')]]
 
     total_pages = len(pages_data)
     generated_images = []
+    today_str = datetime.now().strftime("%d/%m/%Y")
 
     for page_idx, page_lines in enumerate(pages_data, start=1):
-        img = Image.new('RGB', (width, height), color='#fdfbf7')
+        rng = random.Random(page_idx * 1337 + 42)
+        img = Image.new('RGB', (width, height), color='#fdfbf6')
         draw = ImageDraw.Draw(img)
+
+        # Draw 3 binder holes on left margin
+        draw_binder_holes(draw, height, hole_x=65, radius=16)
 
         # Draw notebook horizontal ruled lines
         for y in range(top_margin, bottom_margin + line_height, line_height):
-            draw.line([(left_margin - 55, y), (right_margin, y)], fill='#c3d5e8', width=2)
+            draw.line([(left_margin - 60, y), (right_margin, y)], fill='#c4d7ec', width=2)
 
         # Draw red double left margin
-        draw.line([(left_margin, 70), (left_margin, height - 50)], fill='#e87a7a', width=3)
-        draw.line([(left_margin - 8, 70), (left_margin - 8, height - 50)], fill='#f5bcbc', width=1)
+        draw.line([(left_margin, 70), (left_margin, height - 45)], fill='#e05d5d', width=3)
+        draw.line([(left_margin - 8, 70), (left_margin - 8, height - 45)], fill='#f5bcbc', width=1)
 
         # Top Header Box
-        ink_hdr = '#1e293b'
-        draw.text((left_margin + 20, 100), f"NAME: {student_name.upper()}", fill=ink_hdr, font=font_bold)
-        draw.text((left_margin + 20, 140), f"REG NO: {reg_no.upper()}", fill=ink_hdr, font=font_bold)
-        draw.text((width - 420, 100), f"SUBJECT: {subject_name.upper()}", fill=ink_hdr, font=font_header)
-        draw.text((width - 420, 140), f"PAGE: {page_idx:02d} / {total_pages:02d}", fill=ink_hdr, font=font_header)
-        draw.line([(left_margin, 185), (right_margin, 185)], fill='#64748b', width=2)
+        draw_hand_text_line(draw, f"NAME: {student_name.upper()}", left_margin + 20, 95, font_bold, ink_black_rgb, rng)
+        draw_hand_text_line(draw, f"REG NO: {reg_no.upper()}", left_margin + 20, 138, font_bold, ink_black_rgb, rng)
+        draw_hand_text_line(draw, f"SUBJECT: {subject_name.upper()}", width - 450, 95, font_header, ink_black_rgb, rng)
+        draw_hand_text_line(draw, f"PAGE: {page_idx:02d} / {total_pages:02d}    DATE: {today_str}", width - 450, 138, font_header, ink_black_rgb, rng)
+        
+        # Organic hand-drawn header separator rule with ample vertical breathing room
+        draw_hand_underline(draw, left_margin - 30, 195, right_margin, '#64748b', rng, width=2)
 
         # Draw content
-        ink_blue = '#16315c' # Blue ballpoint pen ink
-        ink_dark = '#09152b'
         curr_y = top_margin + 6
 
-        for l_type, l_text in page_lines:
-            if l_type == 'q':
-                draw.text((left_margin + 20, curr_y), l_text, fill=ink_dark, font=font_question)
+        for l_type, l_tag, l_text in page_lines:
+            if l_type == 'q_head':
+                # Question tag in margin column (e.g. Q1.)
+                draw_hand_text_line(draw, l_tag, left_margin - 60, curr_y, font_question, ink_black_rgb, rng)
+                # Question text in main ruled notebook column
+                draw_hand_text_line(draw, l_text, left_margin + 20, curr_y, font_question, ink_black_rgb, rng)
+            elif l_type == 'q_cont':
+                # Continuation line of question
+                draw_hand_text_line(draw, l_text, left_margin + 20, curr_y, font_question, ink_black_rgb, rng)
             elif l_type == 'ans_head':
-                draw.text((left_margin + 20, curr_y), l_text, fill='#831843', font=font_bold)
+                # Burgundy Ans tag in main column with organic hand-drawn wavy underline
+                draw_hand_text_line(draw, l_tag, left_margin + 20, curr_y, font_bold, ink_burgundy_rgb, rng)
+                ans_w = draw.textbbox((0, 0), l_tag, font=font_bold)[2]
+                draw_hand_underline(draw, left_margin + 20, curr_y + 36, left_margin + 20 + ans_w + 12, '#881337', rng, width=2)
             elif l_type == 'a':
-                draw.text((left_margin + 20, curr_y), l_text, fill=ink_blue, font=font_body)
+                # Royal Blue Ballpoint Pen with human baseline tremor and variable ink pressure
+                draw_hand_text_line(draw, l_text, left_margin + 20, curr_y, font_body, ink_blue_rgb, rng)
+            
             curr_y += line_height
 
         page_path = os.path.join(output_dir, f"page_{page_idx:02d}.png")

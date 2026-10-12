@@ -119,7 +119,7 @@ pub fn run() {
             let daemon_db = local_db.clone();
             let daemon_orch = orchestrator.clone();
 
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 let mut interval = tokio::time::interval(std::time::Duration::from_secs(15));
                 loop {
                     interval.tick().await;
